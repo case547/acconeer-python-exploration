@@ -13,9 +13,10 @@ PEAK_MERGE_LIMIT_M = 0.005
 
 def main():
     """Needed to run detector from command line."""
-    args = et.utils.ExampleArgumentParser(num_sens=1).parse_args()
-    et.utils.config_logging(args)
+    args = et.utils.ExampleArgumentParser(num_sens=1).parse_args() # parse cmd args
+    et.utils.config_logging(args) # set up logging verbosity based on prev args
 
+    # Pick client: socket, SPI, or UART (Raspberry Pi uses socket)
     if args.socket_addr:
         client = et.SocketClient(args.socket_addr)
     elif args.spi:
@@ -26,17 +27,19 @@ def main():
 
     sensor_config = get_sensor_config()
     processing_config = get_processing_config()
-    sensor_config.sensor = args.sensors
+    sensor_config.sensor = args.sensors # sensors as set via command line
 
-    session_info = client.setup_session(sensor_config)
+    # Set up session with created config
+    session_info = client.setup_session(sensor_config) # also calls connect()
     print("Session info:\n", session_info, "\n")
 
     # pg_updater = PGUpdater(sensor_config, processing_config, session_info)
     # pg_process = et.PGProcess(pg_updater)
     # pg_process.start()
 
-    client.start_session()
+    client.start_session() # call will block until sensor confirms its start
 
+    # Capture keyboard interrupt signal without terminating script, to disconnect gracefully
     interrupt_handler = et.utils.ExampleInterruptHandler()
     print("Press Ctrl-C to end session")
 
@@ -48,7 +51,7 @@ def main():
         print(f"Sweep {i+1}:\n", info, "\n", plot_data, "\n")
 
     # while not interrupt_handler.got_signal:
-    #     info, sweep = client.get_next()
+    #     info, sweep = client.get_next() # get_next() will block until sweep received
     #     plot_data = processor.process(sweep, info)
     #     print(info, "\n", plot_data, "\n")
 
@@ -65,9 +68,9 @@ def main():
 
 def get_sensor_config():
     """Define default sensor config and service to use."""
-    config = et.configs.EnvelopeServiceConfig()
-    config.range_interval = [0.2, 0.6]
-    config.update_rate = 40
+    config = et.configs.EnvelopeServiceConfig() # picking envelope service
+    config.range_interval = [0.2, 0.6] # measurement range (metres)
+    config.update_rate = 40 # target measurement rate (Hz)
     config.gain = 0.5
     config.running_average_factor = 0  # Use averaging in detector instead of in API
 
