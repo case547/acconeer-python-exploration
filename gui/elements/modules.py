@@ -14,6 +14,7 @@ import examples.processing.sleep_breathing as sleep_breathing_module
 import examples.processing.sparse_fft as sparse_fft_module
 import examples.processing.sparse_inter_fft as sparse_inter_fft_module
 import examples.processing.sparse_speed as sparse_speed_module
+import examples.processing.water_level as water_level_module
 import service_modules.envelope as envelope_module
 import service_modules.iq as iq_module
 import service_modules.power_bins as power_bins_module
@@ -256,6 +257,16 @@ MODULE_INFOS = [
         True,
         False,
         "https://acconeer-python-exploration.readthedocs.io/en/latest/processing/parking.html",
+    ),
+    ModuleInfo(
+        "envelope_water_level",
+        "Water Level (envelope)",
+        water_level_module,
+        water_level_module.get_sensor_config,
+        water_level_module.Processor,
+        False,
+        True,
+        None,
     ),
 ]
 
