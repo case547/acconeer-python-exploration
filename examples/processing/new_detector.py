@@ -29,10 +29,11 @@ def main():
     sensor_config.sensor = args.sensors
 
     session_info = client.setup_session(sensor_config)
+    print("Session info:\n", session_info, "\n")
 
-    pg_updater = PGUpdater(sensor_config, processing_config, session_info)
-    pg_process = et.PGProcess(pg_updater)
-    pg_process.start()
+    # pg_updater = PGUpdater(sensor_config, processing_config, session_info)
+    # pg_process = et.PGProcess(pg_updater)
+    # pg_process.start()
 
     client.start_session()
 
@@ -44,15 +45,16 @@ def main():
     while not interrupt_handler.got_signal:
         info, sweep = client.get_next()
         plot_data = processor.process(sweep, info)
+        print(info, "\n", plot_data, "\n")
 
-        if plot_data is not None:
-            try:
-                pg_process.put_data(plot_data)
-            except et.PGProccessDiedException:
-                break
+        # if plot_data is not None:
+        #     try:
+        #         pg_process.put_data(plot_data)
+        #     except et.PGProccessDiedException:
+        #         break
 
     print("Disconnecting...")
-    pg_process.close()
+    # pg_process.close()
     client.disconnect()
 
 
