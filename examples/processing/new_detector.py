@@ -12,6 +12,7 @@ PEAK_MERGE_LIMIT_M = 0.005
 
 
 def main():
+    """Needed to run detector from command line."""
     args = et.utils.ExampleArgumentParser(num_sens=1).parse_args()
     et.utils.config_logging(args)
 
@@ -56,6 +57,7 @@ def main():
 
 
 def get_sensor_config():
+    """Define default sensor config and service to use."""
     config = et.configs.EnvelopeServiceConfig()
     config.range_interval = [0.2, 0.6]
     config.update_rate = 40
@@ -66,6 +68,7 @@ def get_sensor_config():
 
 
 class Processor:
+    """Detector class, which does all the processing."""
     def __init__(self, sensor_config, processing_config, session_info):
         self.session_info = session_info
 
@@ -103,6 +106,7 @@ class Processor:
         self.update_processing_config(processing_config)
 
     def update_processing_config(self, processing_config):
+        """Called when sliders or values for the detector are changed in the GUI."""
         self.nbr_average = processing_config.nbr_average
         self.threshold_type = processing_config.threshold_type
         self.peak_sorting_method = processing_config.peak_sorting_type
@@ -329,6 +333,10 @@ class Processor:
         return [peak_indexes[i] for i in quantity_to_sort.argsort()]
 
     def process(self, data, data_info=None):
+        """Called every frame and should return the struct out_data.
+        
+        This struct contains all processed data needed for graphs and plots.
+        """
         if data_info is None:
             warnings.warn(
                 "To leave out data_info or set to None is deprecated",
@@ -450,6 +458,10 @@ class Processor:
 
 
 class ProcessingConfiguration(et.configbase.ProcessingConfig):
+    """Define configuration options for detector.
+    
+    GUI will populate buttons and sliders for all parameters defined here.
+    """
     class ThresholdType(Enum):
         FIXED = "Fixed"
         RECORDED = "Recorded"
@@ -657,6 +669,7 @@ get_processing_config = ProcessingConfiguration
 
 
 class PGUpdater:
+    """Does all the plotting."""
     def __init__(self, sensor_config, processing_config, session_info):
         self.sensor_config = sensor_config
         self.processing_config = processing_config
@@ -666,6 +679,8 @@ class PGUpdater:
         self.setup_is_done = False
 
     def update_processing_config(self, processing_config=None):
+        """Called when sliders or values for the detector are changed in the GUI."""
+
         if processing_config is None:
             processing_config = self.processing_config
         else:
@@ -686,6 +701,7 @@ class PGUpdater:
         self.hist_plot.setXRange(-processing_config.history_length_s, 0)
 
     def setup(self, win):
+        """Sets up all graphs and plots."""
         win.setWindowTitle("Acconeer Distance Detector")
 
         # Sweep Plot
@@ -783,6 +799,10 @@ class PGUpdater:
         self.setup_is_done = True
 
     def update(self, data):
+        """Called each frame and receives the struct out_data
+        
+        Any plotting of data needs to be within this struct.
+        """
         self.sweep_curve.setData(100.0 * self.r, data["sweep"])
         self.mean_sweep_curve.setData(100.0 * self.r, data["last_mean_sweep"])
         et.utils.pg_curve_set_data_with_nan(  # Workaround for bug in PyQt5/PyQtGraph
