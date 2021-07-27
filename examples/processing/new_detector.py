@@ -42,10 +42,15 @@ def main():
 
     processor = Processor(sensor_config, processing_config, session_info)
 
-    while not interrupt_handler.got_signal:
+    for i in range(3):
         info, sweep = client.get_next()
         plot_data = processor.process(sweep, info)
-        print(info, "\n", plot_data, "\n")
+        print(f"Sweep {i+1}:\n", info, "\n", plot_data, "\n")
+
+    # while not interrupt_handler.got_signal:
+    #     info, sweep = client.get_next()
+    #     plot_data = processor.process(sweep, info)
+    #     print(info, "\n", plot_data, "\n")
 
         # if plot_data is not None:
         #     try:
