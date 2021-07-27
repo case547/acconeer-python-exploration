@@ -69,10 +69,12 @@ def main():
 def get_sensor_config():
     """Define default sensor config and service to use."""
     config = et.configs.EnvelopeServiceConfig() # picking envelope service
-    config.range_interval = [0.2, 0.6] # measurement range (metres)
-    config.update_rate = 40 # target measurement rate (Hz)
     config.gain = 0.5
+    config.maximize_signal_attenuation = False
+    config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_1
+    config.range_interval = [0.2, 0.6] # measurement range (metres)
     config.running_average_factor = 0  # Use averaging in detector instead of in API
+    config.update_rate = 40 # target measurement rate (Hz)
 
     return config
 
