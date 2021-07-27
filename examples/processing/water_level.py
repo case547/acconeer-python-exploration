@@ -3,7 +3,7 @@ from copy import copy
 from enum import Enum
 
 import numpy as np
-import pyqtgraph as pg
+# import pyqtgraph as pg
 
 import acconeer.exptool as et
 
