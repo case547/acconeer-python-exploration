@@ -76,7 +76,7 @@ def get_sensor_config():
     config.noise_level_normalization = True
     config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_1
     config.range_interval = [0.2, 0.6] # measurement range (metres)
-    config.repetition_mode = RepetitionMode.SENSOR_DRIVEN
+    config.repetition_mode = et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN
     config.running_average_factor = 0  # Use averaging in detector instead of in API
     config.tx_disable = False # don't disable radio transmitter
     config.update_rate = 40 # target measurement rate (Hz)
