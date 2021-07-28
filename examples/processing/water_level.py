@@ -659,6 +659,8 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
         ),
     )
 
+    # Configure parameters here
+
     def check_sensor_config(self, sensor_config):
         alerts = {
             "processing": [],
