@@ -3,7 +3,7 @@ from copy import copy
 from enum import Enum
 
 import numpy as np
-# import pyqtgraph as pg
+import pyqtgraph as pg
 
 import acconeer.exptool as et
 
@@ -33,9 +33,9 @@ def main():
     session_info = client.setup_session(sensor_config) # also calls connect()
     print("Session info:\n", session_info, "\n")
 
-    # pg_updater = PGUpdater(sensor_config, processing_config, session_info)
-    # pg_process = et.PGProcess(pg_updater)
-    # pg_process.start()
+    pg_updater = PGUpdater(sensor_config, processing_config, session_info)
+    pg_process = et.PGProcess(pg_updater)
+    pg_process.start()
 
     client.start_session() # call will block until sensor confirms its start
 
@@ -45,24 +45,24 @@ def main():
 
     processor = Processor(sensor_config, processing_config, session_info)
 
-    for i in range(3):
-        info, sweep = client.get_next()
-        plot_data = processor.process(sweep, info)
-        print(f"Sweep {i+1}:\n", info, "\n", plot_data, "\n")
-
-    # while not interrupt_handler.got_signal:
-    #     info, sweep = client.get_next() # get_next() will block until sweep received
+    # for i in range(3):
+    #     info, sweep = client.get_next()
     #     plot_data = processor.process(sweep, info)
-    #     print(info, "\n", plot_data, "\n")
+    #     print(f"Sweep {i+1}:\n", info, "\n", plot_data, "\n")
 
-        # if plot_data is not None:
-        #     try:
-        #         pg_process.put_data(plot_data)
-        #     except et.PGProccessDiedException:
-        #         break
+    while not interrupt_handler.got_signal:
+        info, sweep = client.get_next() # get_next() will block until sweep received
+        plot_data = processor.process(sweep, info)
+        # print(info, "\n", plot_data, "\n")
+
+        if plot_data is not None:
+            try:
+                pg_process.put_data(plot_data)
+            except et.PGProccessDiedException:
+                break
 
     print("Disconnecting...")
-    # pg_process.close()
+    pg_process.close()
     client.disconnect()
 
 
@@ -350,7 +350,7 @@ class Processor:
         return [peak_indexes[i] for i in quantity_to_sort.argsort()]
 
     def process(self, data, data_info=None):
-        """Called every frame and should return the struct out_data.
+        """Function is called every frame and should return the struct out_data.
         
         This struct contains all processed data needed for graphs and plots.
         """
@@ -721,7 +721,7 @@ class PGUpdater:
 
     def setup(self, win):
         """Sets up all graphs and plots."""
-        win.setWindowTitle("Acconeer Distance Detector")
+        win.setWindowTitle("Water-Level Detector")
 
         # Sweep Plot
         self.sweep_plot = win.addPlot(title="Sweep and threshold")
