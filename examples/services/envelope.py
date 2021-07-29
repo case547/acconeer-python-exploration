@@ -33,10 +33,9 @@ def main():
     interrupt_handler = et.utils.ExampleInterruptHandler()
     print("Press Ctrl-C to end session")
 
-    for i in range(3):
-    # while not interrupt_handler.got_signal:
+    while not interrupt_handler.got_signal:
         data_info, data = client.get_next()
-        print("Sweep {}:\n".format(i + 1), data_info, "\n", data, "\n")
+
         try:
             pg_process.put_data(data)
         except et.PGProccessDiedException:
