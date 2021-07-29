@@ -74,7 +74,7 @@ def get_sensor_config():
     config.hw_accelerated_average_samples = 10 # number of samples taken for single point in data [1,63]
     config.maximize_signal_attenuation = False
     config.noise_level_normalization = True
-    config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_1
+    config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_2
     config.range_interval = [0.2, 0.6] # measurement range (metres)
     config.repetition_mode = et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN
     config.running_average_factor = 0  # Use averaging in detector instead of in API
@@ -660,6 +660,9 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
     )
 
     # Configure parameters here
+    nbr_average = 5.0
+    threshold_type = ThresholdType.FIXED
+    fixed_threshold = 800
 
     def check_sensor_config(self, sensor_config):
         alerts = {
