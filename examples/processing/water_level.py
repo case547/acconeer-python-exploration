@@ -45,21 +45,23 @@ def main():
 
     processor = Processor(sensor_config, processing_config, session_info)
 
-    for i in range(100):
-        info, sweep = client.get_next()
-        plot_data = processor.process(sweep, info)
-        print(f"Sweep {i+1}:\n", info, "\n", plot_data, "\n")
-
-    # while not interrupt_handler.got_signal:
-    #     info, sweep = client.get_next() # get_next() will block until sweep received
+    # for _ in range(1):
+    #     info, sweep = client.get_next()
+    #     index = processor.sweep_index
     #     plot_data = processor.process(sweep, info)
-    #     # print(info, "\n", plot_data, "\n")
+    #     print(f"Sweep {index+1}:\n", info, "\n", plot_data, "\n")
 
-    #     if plot_data is not None:
-    #         try:
-    #             pg_process.put_data(plot_data)
-    #         except et.PGProccessDiedException:
-    #             break
+    while not interrupt_handler.got_signal:
+        info, sweep = client.get_next() # get_next() will block until sweep received
+        index = processor.sweep_index
+        plot_data = processor.process(sweep, info)
+        print(f"Sweep {processor.sweep_index}:\n", info, "\n")
+
+        if plot_data is not None:
+            try:
+                pg_process.put_data(plot_data)
+            except et.PGProccessDiedException:
+                break
 
     print("Disconnecting...")
     pg_process.close()
@@ -70,12 +72,12 @@ def get_sensor_config():
     """Define default sensor config and service to use."""
     config = et.configs.EnvelopeServiceConfig() # picking envelope service
     config.downsampling_factor = 1 # must be 1, 2, or 4
-    config.gain = 0.5
+    config.gain = 0.2
     config.hw_accelerated_average_samples = 10 # number of samples taken for single point in data [1,63]
     config.maximize_signal_attenuation = False
     config.noise_level_normalization = True
-    config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_2
-    config.range_interval = [0.2, 0.6] # measurement range (metres)
+    config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_1
+    config.range_interval = [0.1, 0.6] # measurement range (metres)
     config.repetition_mode = et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN
     config.running_average_factor = 0  # Use averaging in detector instead of in API
     config.tx_disable = False # don't disable radio transmitter
@@ -712,9 +714,9 @@ class PGUpdater:
             return
 
         # Hide the first_distance_above_threshold data
-        self.first_distance_above_threshold.setVisible(
-            processing_config.show_first_above_threshold
-        )
+        # self.first_distance_above_threshold.setVisible(
+        #     processing_config.show_first_above_threshold
+        # )
 
         # ...and hide the marker and text in the legend.
         self.hist_plot.legend.items[2][0].setVisible(processing_config.show_first_above_threshold)
@@ -808,15 +810,15 @@ class PGUpdater:
             name="Minor peaks",
         )
 
-        self.first_distance_above_threshold = self.hist_plot.plot(
-            pen=None,
-            symbol="o",
-            symbolSize=3,
-            symbolPen="k",
-            symbolBrush=et.utils.color_cycler(2),
-            name="First distance above threshold",
-            visible=False,
-        )
+        # self.first_distance_above_threshold = self.hist_plot.plot(
+        #     pen=None,
+        #     symbol="o",
+        #     symbolSize=3,
+        #     symbolPen="k",
+        #     symbolBrush=et.utils.color_cycler(2),
+        #     name="First distance above threshold",
+        #     visible=False,
+        # )
 
         self.setup_is_done = True
 
@@ -847,9 +849,9 @@ class PGUpdater:
         self.minor_peaks.setData(
             data["minor_peaks_hist_sweep_s"], 100 * data["minor_peaks_hist_dist"]
         )
-        self.first_distance_above_threshold.setData(
-            data["above_thres_hist_sweep_s"], 100 * data["above_thres_hist_dist"]
-        )
+        # self.first_distance_above_threshold.setData(
+        #     data["above_thres_hist_sweep_s"], 100 * data["above_thres_hist_dist"]
+        # )
 
         if data["found_peaks"] is not None:
             peaks = np.take(self.r, data["found_peaks"]) * 100.0
