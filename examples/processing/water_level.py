@@ -45,21 +45,21 @@ def main():
 
     processor = Processor(sensor_config, processing_config, session_info)
 
-    # for i in range(3):
-    #     info, sweep = client.get_next()
-    #     plot_data = processor.process(sweep, info)
-    #     print(f"Sweep {i+1}:\n", info, "\n", plot_data, "\n")
-
-    while not interrupt_handler.got_signal:
-        info, sweep = client.get_next() # get_next() will block until sweep received
+    for i in range(100):
+        info, sweep = client.get_next()
         plot_data = processor.process(sweep, info)
-        # print(info, "\n", plot_data, "\n")
+        print(f"Sweep {i+1}:\n", info, "\n", plot_data, "\n")
 
-        if plot_data is not None:
-            try:
-                pg_process.put_data(plot_data)
-            except et.PGProccessDiedException:
-                break
+    # while not interrupt_handler.got_signal:
+    #     info, sweep = client.get_next() # get_next() will block until sweep received
+    #     plot_data = processor.process(sweep, info)
+    #     # print(info, "\n", plot_data, "\n")
+
+    #     if plot_data is not None:
+    #         try:
+    #             pg_process.put_data(plot_data)
+    #         except et.PGProccessDiedException:
+    #             break
 
     print("Disconnecting...")
     pg_process.close()
@@ -97,16 +97,16 @@ class Processor:
         self.last_mean_sweep = np.full(num_depths, np.nan)
         self.sweeps_since_mean = 0
 
-        self.sc_sum_bg_sweeps = np.zeros(num_depths)
-        self.sc_sum_squared_bg_sweeps = np.zeros(num_depths)
-        self.sc_bg_sweep_mean = np.full(num_depths, np.nan)
-        self.sc_bg_sweep_std = np.full(num_depths, np.nan)
-        self.sc_bg_threshold = np.full(num_depths, np.nan)
-        self.sc_used_mean = np.full(num_depths, np.nan)
-        self.sc_used_std = np.full(num_depths, np.nan)
-        self.sc_used_threshold = np.full(num_depths, np.nan)
+        # self.sc_sum_bg_sweeps = np.zeros(num_depths)
+        # self.sc_sum_squared_bg_sweeps = np.zeros(num_depths)
+        # self.sc_bg_sweep_mean = np.full(num_depths, np.nan)
+        # self.sc_bg_sweep_std = np.full(num_depths, np.nan)
+        # self.sc_bg_threshold = np.full(num_depths, np.nan)
+        # self.sc_used_mean = np.full(num_depths, np.nan)
+        # self.sc_used_std = np.full(num_depths, np.nan)
+        # self.sc_used_threshold = np.full(num_depths, np.nan)
 
-        self.sc_bg_calculated = False
+        # self.sc_bg_calculated = False
 
         self.history_length_s = processing_config.history_length_s
         self.main_peak_hist_sweep_idx = []
@@ -130,97 +130,97 @@ class Processor:
 
         self.fixed_threshold_level = processing_config.fixed_threshold
 
-        self.sc_sensitivity = processing_config.sc_sensitivity
-        self.sc_bg_nbr_sweeps = processing_config.sc_nbr_sweep_for_bg
-        self.sc_load_save_bg = processing_config.sc_load_save_bg
+        # self.sc_sensitivity = processing_config.sc_sensitivity
+        # self.sc_bg_nbr_sweeps = processing_config.sc_nbr_sweep_for_bg
+        # self.sc_load_save_bg = processing_config.sc_load_save_bg
 
-        self.idx_cfar_pts = np.round(
-            (
-                processing_config.cfar_guard_cm / 100.0 / 2.0 / self.dr
-                + np.arange(processing_config.cfar_window_cm / 100.0 / self.dr)
-            )
-        )
+        # self.idx_cfar_pts = np.round(
+        #     (
+        #         processing_config.cfar_guard_cm / 100.0 / 2.0 / self.dr
+        #         + np.arange(processing_config.cfar_window_cm / 100.0 / self.dr)
+        #     )
+        # )
 
-        self.cfar_one_sided = processing_config.cfar_one_sided
-        self.cfar_sensitivity = processing_config.cfar_sensitivity
+        # self.cfar_one_sided = processing_config.cfar_one_sided
+        # self.cfar_sensitivity = processing_config.cfar_sensitivity
 
-        self.update_sc_threshold()
+        # self.update_sc_threshold()
 
         self.history_length_s = processing_config.history_length_s
 
-    def update_sc_threshold(self):
-        self.sc_used_threshold = (
-            self.sc_used_mean + (1.0 / (self.sc_sensitivity + 1e-10) - 1.0) * self.sc_used_std
-        )
+    # def update_sc_threshold(self):
+    #     self.sc_used_threshold = (
+    #         self.sc_used_mean + (1.0 / (self.sc_sensitivity + 1e-10) - 1.0) * self.sc_used_std
+    #     )
 
-    def get_sc_threshold(self, sweep):
-        # Collect first sweeps to construct a stationary clutter threshold
-        # Accumulate sweeps instead of saving each for lower memory footprint
-        if self.sweep_index < self.sc_bg_nbr_sweeps:
-            self.sc_sum_bg_sweeps += sweep
-            self.sc_sum_squared_bg_sweeps += np.square(sweep)
+    # def get_sc_threshold(self, sweep):
+    #     # Collect first sweeps to construct a stationary clutter threshold
+    #     # Accumulate sweeps instead of saving each for lower memory footprint
+    #     if self.sweep_index < self.sc_bg_nbr_sweeps:
+    #         self.sc_sum_bg_sweeps += sweep
+    #         self.sc_sum_squared_bg_sweeps += np.square(sweep)
 
-        if self.sweep_index >= self.sc_bg_nbr_sweeps - 1 and not self.sc_bg_calculated:
-            self.sc_bg_sweep_mean = self.sc_sum_bg_sweeps / self.sc_bg_nbr_sweeps
-            mean_square = self.sc_sum_squared_bg_sweeps / self.sc_bg_nbr_sweeps
-            square_mean = np.square(self.sc_bg_sweep_mean)
-            self.sc_bg_sweep_std = np.sqrt(
-                (mean_square - square_mean) * self.sc_bg_nbr_sweeps / (self.sc_bg_nbr_sweeps - 1)
-            )
+    #     if self.sweep_index >= self.sc_bg_nbr_sweeps - 1 and not self.sc_bg_calculated:
+    #         self.sc_bg_sweep_mean = self.sc_sum_bg_sweeps / self.sc_bg_nbr_sweeps
+    #         mean_square = self.sc_sum_squared_bg_sweeps / self.sc_bg_nbr_sweeps
+    #         square_mean = np.square(self.sc_bg_sweep_mean)
+    #         self.sc_bg_sweep_std = np.sqrt(
+    #             (mean_square - square_mean) * self.sc_bg_nbr_sweeps / (self.sc_bg_nbr_sweeps - 1)
+    #         )
 
-            self.sc_bg_calculated = True
+    #         self.sc_bg_calculated = True
 
-            self.sc_load_save_bg.buffered_data = np.array(
-                [
-                    self.sc_bg_sweep_mean,
-                    self.sc_bg_sweep_std,
-                ]
-            )
-            # self.sc_load_save_bg.loaded_data = self.sc_load_save_bg.buffered_data
+    #         self.sc_load_save_bg.buffered_data = np.array(
+    #             [
+    #                 self.sc_bg_sweep_mean,
+    #                 self.sc_bg_sweep_std,
+    #             ]
+    #         )
+    #         # self.sc_load_save_bg.loaded_data = self.sc_load_save_bg.buffered_data
 
-        # Checking if user loaded a threshold and if it is compatible
-        if self.sc_load_save_bg.error is None:
-            loaded_threshold_data = self.sc_load_save_bg.loaded_data
+    #     # Checking if user loaded a threshold and if it is compatible
+    #     if self.sc_load_save_bg.error is None:
+    #         loaded_threshold_data = self.sc_load_save_bg.loaded_data
 
-            if loaded_threshold_data is not None:
-                try:
-                    if not isinstance(loaded_threshold_data, np.ndarray):
-                        self.sc_load_save_bg.error = "Wrong type"
-                    elif np.iscomplexobj(loaded_threshold_data):
-                        self.sc_load_save_bg.error = "Wrong type (is complex)"
-                    elif loaded_threshold_data.shape != (2, sweep.size):
-                        self.sc_load_save_bg.error = "Size mismatch"
-                    else:
-                        self.sc_used_mean = loaded_threshold_data[0, :]
-                        self.sc_used_std = loaded_threshold_data[1, :]
-                except Exception:
-                    self.sc_used_mean = np.full(sweep.shape, np.nan)
-                    self.sc_used_std = np.full(sweep.shape, np.nan)
-                    self.sc_load_save_bg.error = "Invalid threshold data"
-            else:
-                self.sc_used_mean = np.full(sweep.shape, np.nan)
-                self.sc_used_std = np.full(sweep.shape, np.nan)
+    #         if loaded_threshold_data is not None:
+    #             try:
+    #                 if not isinstance(loaded_threshold_data, np.ndarray):
+    #                     self.sc_load_save_bg.error = "Wrong type"
+    #                 elif np.iscomplexobj(loaded_threshold_data):
+    #                     self.sc_load_save_bg.error = "Wrong type (is complex)"
+    #                 elif loaded_threshold_data.shape != (2, sweep.size):
+    #                     self.sc_load_save_bg.error = "Size mismatch"
+    #                 else:
+    #                     self.sc_used_mean = loaded_threshold_data[0, :]
+    #                     self.sc_used_std = loaded_threshold_data[1, :]
+    #             except Exception:
+    #                 self.sc_used_mean = np.full(sweep.shape, np.nan)
+    #                 self.sc_used_std = np.full(sweep.shape, np.nan)
+    #                 self.sc_load_save_bg.error = "Invalid threshold data"
+    #         else:
+    #             self.sc_used_mean = np.full(sweep.shape, np.nan)
+    #             self.sc_used_std = np.full(sweep.shape, np.nan)
 
-        self.update_sc_threshold()
+    #     self.update_sc_threshold()
 
-    def calculate_cfar_threshold(self, sweep, idx_cfar_pts, alpha, one_side):
+    # def calculate_cfar_threshold(self, sweep, idx_cfar_pts, alpha, one_side):
 
-        threshold = np.full(sweep.shape, np.nan)
+    #     threshold = np.full(sweep.shape, np.nan)
 
-        start_idx = np.max(idx_cfar_pts)
-        if one_side:
-            rel_indexes = -idx_cfar_pts
-            end_idx = sweep.size
-        else:
-            rel_indexes = np.concatenate((-idx_cfar_pts, +idx_cfar_pts), axis=0)
-            end_idx = sweep.size - start_idx
+    #     start_idx = np.max(idx_cfar_pts)
+    #     if one_side:
+    #         rel_indexes = -idx_cfar_pts
+    #         end_idx = sweep.size
+    #     else:
+    #         rel_indexes = np.concatenate((-idx_cfar_pts, +idx_cfar_pts), axis=0)
+    #         end_idx = sweep.size - start_idx
 
-        for idx in np.arange(start_idx, end_idx):
-            threshold[int(idx)] = (
-                1.0 / (alpha + 1e-10) * np.mean(sweep[(idx + rel_indexes).astype(int)])
-            )
+    #     for idx in np.arange(start_idx, end_idx):
+    #         threshold[int(idx)] = (
+    #             1.0 / (alpha + 1e-10) * np.mean(sweep[(idx + rel_indexes).astype(int)])
+    #         )
 
-        return threshold
+    #     return threshold
 
     def find_first_point_above_threshold(self, sweep, threshold):
 
@@ -365,7 +365,7 @@ class Processor:
 
         # Accumulate sweeps for stationary clutter threshold and check if user has
         # loaded one from disk
-        self.get_sc_threshold(sweep)
+        # self.get_sc_threshold(sweep)
 
         # Average envelope sweeps, written to handle varying nbr_average
         weight = 1.0 / (1.0 + self.sweeps_since_mean)
@@ -401,7 +401,7 @@ class Processor:
                 self.last_mean_sweep, threshold
             )
 
-            # First peak-finding, then peak-merging, finallay peak sorting.
+            # First peak-finding, then peak-merging, finally peak sorting.
             found_peaks = self.find_peaks(self.last_mean_sweep, threshold)
             if len(found_peaks) > 1:
                 found_peaks = self.merge_peaks(found_peaks, np.round(PEAK_MERGE_LIMIT_M / self.dr))
@@ -530,100 +530,100 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
         ),
     )
 
-    sc_nbr_sweep_for_bg = et.configbase.FloatParameter(
-        label="Number of sweeps for background estimation",
-        default_value=20,
-        limits=(2, 200),
-        decimals=0,
-        visible=lambda conf: conf.threshold_type == conf.ThresholdType.RECORDED,
-        updateable=True,
-        order=20,
-        help=(
-            "The number of (non-averaged) sweeps collected for calculating the Stationary"
-            " Clutter threshold."
-        ),
-    )
+    # sc_nbr_sweep_for_bg = et.configbase.FloatParameter(
+    #     label="Number of sweeps for background estimation",
+    #     default_value=20,
+    #     limits=(2, 200),
+    #     decimals=0,
+    #     visible=lambda conf: conf.threshold_type == conf.ThresholdType.RECORDED,
+    #     updateable=True,
+    #     order=20,
+    #     help=(
+    #         "The number of (non-averaged) sweeps collected for calculating the Stationary"
+    #         " Clutter threshold."
+    #     ),
+    # )
 
-    sc_load_save_bg = et.configbase.ReferenceDataParameter(
-        label="Recorded threshold",
-        visible=lambda conf: conf.threshold_type == conf.ThresholdType.RECORDED,
-        order=23,
-        help="Load/Save a recorded threshold from/to disk.",
-    )
+    # sc_load_save_bg = et.configbase.ReferenceDataParameter(
+    #     label="Recorded threshold",
+    #     visible=lambda conf: conf.threshold_type == conf.ThresholdType.RECORDED,
+    #     order=23,
+    #     help="Load/Save a recorded threshold from/to disk.",
+    # )
 
-    sc_sensitivity = et.configbase.FloatParameter(
-        label="Stationary clutter sensitivity",
-        default_value=0.3,
-        limits=(0.01, 1),
-        logscale=True,
-        visible=lambda conf: conf.threshold_type == conf.ThresholdType.RECORDED,
-        decimals=4,
-        updateable=True,
-        order=24,
-        help=(
-            "Value between 0 and 1 that sets the threshold. A low sensitivity will set a "
-            "high threshold, resulting in only few false alarms but might result in "
-            "missed detections."
-        ),
-    )
+    # sc_sensitivity = et.configbase.FloatParameter(
+    #     label="Stationary clutter sensitivity",
+    #     default_value=0.3,
+    #     limits=(0.01, 1),
+    #     logscale=True,
+    #     visible=lambda conf: conf.threshold_type == conf.ThresholdType.RECORDED,
+    #     decimals=4,
+    #     updateable=True,
+    #     order=24,
+    #     help=(
+    #         "Value between 0 and 1 that sets the threshold. A low sensitivity will set a "
+    #         "high threshold, resulting in only few false alarms but might result in "
+    #         "missed detections."
+    #     ),
+    # )
 
-    cfar_sensitivity = et.configbase.FloatParameter(
-        label="CFAR sensitivity",
-        default_value=0.5,
-        limits=(0.01, 1),
-        logscale=True,
-        visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
-        decimals=4,
-        updateable=True,
-        order=40,
-        help=(
-            "Value between 0 and 1 that sets the threshold. A low sensitivity will set a "
-            "high threshold, resulting in only few false alarms but might result in "
-            "missed detections."
-        ),
-    )
+    # cfar_sensitivity = et.configbase.FloatParameter(
+    #     label="CFAR sensitivity",
+    #     default_value=0.5,
+    #     limits=(0.01, 1),
+    #     logscale=True,
+    #     visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
+    #     decimals=4,
+    #     updateable=True,
+    #     order=40,
+    #     help=(
+    #         "Value between 0 and 1 that sets the threshold. A low sensitivity will set a "
+    #         "high threshold, resulting in only few false alarms but might result in "
+    #         "missed detections."
+    #     ),
+    # )
 
-    cfar_guard_cm = et.configbase.FloatParameter(
-        label="CFAR guard",
-        default_value=12,
-        limits=(1, 20),
-        unit="cm",
-        decimals=1,
-        visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
-        updateable=True,
-        order=41,
-        help=(
-            "Range around the distance of interest that is omitted when calculating "
-            "CFAR threshold. Can be low, ~4 cm, for Profile 1, and should be "
-            "increased for higher Profiles."
-        ),
-    )
+    # cfar_guard_cm = et.configbase.FloatParameter(
+    #     label="CFAR guard",
+    #     default_value=12,
+    #     limits=(1, 20),
+    #     unit="cm",
+    #     decimals=1,
+    #     visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
+    #     updateable=True,
+    #     order=41,
+    #     help=(
+    #         "Range around the distance of interest that is omitted when calculating "
+    #         "CFAR threshold. Can be low, ~4 cm, for Profile 1, and should be "
+    #         "increased for higher Profiles."
+    #     ),
+    # )
 
-    cfar_window_cm = et.configbase.FloatParameter(
-        label="CFAR window",
-        default_value=3,
-        limits=(0.1, 20),
-        unit="cm",
-        decimals=1,
-        visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
-        updateable=True,
-        order=42,
-        help="Range next to the CFAR guard from which the threshold level will be calculated.",
-    )
+    # cfar_window_cm = et.configbase.FloatParameter(
+    #     label="CFAR window",
+    #     default_value=3,
+    #     limits=(0.1, 20),
+    #     unit="cm",
+    #     decimals=1,
+    #     visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
+    #     updateable=True,
+    #     order=42,
+    #     help="Range next to the CFAR guard from which the threshold level will be calculated.",
+    # )
 
-    cfar_one_sided = et.configbase.BoolParameter(
-        label="Use only lower distance to set threshold",
-        default_value=False,
-        visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
-        updateable=True,
-        order=43,
-        help=(
-            "Instead of determining the CFAR threshold from sweep amplitudes from "
-            "distances both closer and a farther, use only closer. Helpful e.g. for "
-            "fluid level in small tanks, where many multipath signal can apprear "
-            "just after the main peak."
-        ),
-    )
+    # cfar_one_sided = et.configbase.BoolParameter(
+    #     label="Use only lower distance to set threshold",
+    #     default_value=False,
+    #     visible=lambda conf: conf.threshold_type == conf.ThresholdType.CFAR,
+    #     updateable=True,
+    #     order=43,
+    #     help=(
+    #         "Instead of determining the CFAR threshold from sweep amplitudes from "
+    #         "distances both closer and a farther, use only closer. Helpful e.g. for "
+    #         "fluid level in small tanks, where many multipath signal can apprear "
+    #         "just after the main peak."
+    #     ),
+    # )
 
     peak_sorting_type = et.configbase.EnumParameter(
         label="Peak sorting",
