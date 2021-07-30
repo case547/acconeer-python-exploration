@@ -288,10 +288,6 @@ class Processor:
 
         sweep = data
 
-        # Accumulate sweeps for stationary clutter threshold and check if user has
-        # loaded one from disk
-        # self.get_sc_threshold(sweep)
-
         # Average envelope sweeps, written to handle varying nbr_average
         weight = 1.0 / (1.0 + self.sweeps_since_mean)
         self.current_mean_sweep = weight * sweep + (1.0 - weight) * self.current_mean_sweep
