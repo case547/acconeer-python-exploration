@@ -6,6 +6,7 @@ import numpy as np
 import pyqtgraph as pg
 
 import acconeer.exptool as et
+from argparse import ArgumentParser
 
 
 PEAK_MERGE_LIMIT_M = 0.005
@@ -13,21 +14,15 @@ PEAK_MERGE_LIMIT_M = 0.005
 
 def main():
     """Needed to run detector from command line."""
-    args = et.utils.ExampleArgumentParser(num_sens=1).parse_args() # parse cmd args
-    et.utils.config_logging(args) # set up logging verbosity based on prev args
-
-    # Pick client: socket, SPI, or UART (Raspberry Pi uses socket)
-    if args.socket_addr:
-        client = et.SocketClient(args.socket_addr)
-    elif args.spi:
-        client = et.SPIClient()
-    else:
-        port = args.serial_port or et.utils.autodetect_serial_port()
-        client = et.UARTClient(port)
-
+    parser = ArgumentParser()
+    parser.add_argument("socket_addr", help="connect via socket on given address (using json-based protocol)")
+    args = parser.parse_args()
+    
+    client = et.SocketClient(args.socket_addr) # Raspberry Pi uses socket client
+    
     sensor_config = get_sensor_config()
     processing_config = get_processing_config()
-    sensor_config.sensor = args.sensors # sensors as set via command line
+    sensor_config.sensor = [1]
 
     # Set up session with created config
     session_info = client.setup_session(sensor_config) # also calls connect()
@@ -55,7 +50,7 @@ def main():
         info, sweep = client.get_next() # get_next() will block until sweep received
         index = processor.sweep_index
         plot_data = processor.process(sweep, info)
-        print(f"Sweep {processor.sweep_index}:\n", info, "\n")
+        # print(f"Sweep {index}:\n", info, "\n")
 
         if plot_data is not None:
             try:
@@ -258,7 +253,7 @@ class Processor:
             if np.isnan(threshold[d + 1]):
                 break
 
-            # At this point, threshold is defined (not Nan)
+            # At this point, threshold is defined (not NaN)
 
             # If the current point is not over threshold, the next will not be a peak
             if sweep[d] <= threshold[d]:
@@ -664,7 +659,7 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
     # Configure parameters here
     nbr_average = 5.0
     threshold_type = ThresholdType.FIXED
-    fixed_threshold = 800
+    fixed_threshold = 1800
 
     def check_sensor_config(self, sensor_config):
         alerts = {
