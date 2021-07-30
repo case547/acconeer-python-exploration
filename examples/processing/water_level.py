@@ -50,7 +50,10 @@ def main():
         info, sweep = client.get_next() # get_next() will block until sweep received
         index = processor.sweep_index
         plot_data = processor.process(sweep, info)
-        # print(f"Sweep {index}:\n", info, "\n")
+
+        if plot_data["found_peaks"]:
+            peaks = np.take(processor.r, plot_data["found_peaks"]) * 100.0
+            print(f"Sweep {index}:\n", "{:.2f} cm".format(peaks[0]), "\n")
 
         if plot_data is not None:
             try:
@@ -296,8 +299,6 @@ class Processor:
         # Determining threshold
         if self.threshold_type is ProcessingConfiguration.ThresholdType.FIXED:
             threshold = self.fixed_threshold_level * np.ones(sweep.size)
-        elif self.threshold_type is ProcessingConfiguration.ThresholdType.RECORDED:
-            threshold = self.sc_used_threshold
         elif self.threshold_type is ProcessingConfiguration.ThresholdType.CFAR:
             threshold = self.calculate_cfar_threshold(
                 self.current_mean_sweep,
@@ -596,9 +597,9 @@ class PGUpdater:
             return
 
         # Hide the first_distance_above_threshold data
-        # self.first_distance_above_threshold.setVisible(
-        #     processing_config.show_first_above_threshold
-        # )
+        self.first_distance_above_threshold.setVisible(
+            processing_config.show_first_above_threshold
+        )
 
         # ...and hide the marker and text in the legend.
         self.hist_plot.legend.items[2][0].setVisible(processing_config.show_first_above_threshold)
@@ -692,15 +693,15 @@ class PGUpdater:
             name="Minor peaks",
         )
 
-        # self.first_distance_above_threshold = self.hist_plot.plot(
-        #     pen=None,
-        #     symbol="o",
-        #     symbolSize=3,
-        #     symbolPen="k",
-        #     symbolBrush=et.utils.color_cycler(2),
-        #     name="First distance above threshold",
-        #     visible=False,
-        # )
+        self.first_distance_above_threshold = self.hist_plot.plot(
+            pen=None,
+            symbol="o",
+            symbolSize=3,
+            symbolPen="k",
+            symbolBrush=et.utils.color_cycler(2),
+            name="First distance above threshold",
+            visible=False,
+        )
 
         self.setup_is_done = True
 
