@@ -536,7 +536,7 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
         updateable=True,
         order=199,
         help=(
-            "When detect in the presence of object very close to the sensor, the "
+            "When detecting the presence of object very close to the sensor, the "
             "strong direct leakage might cause that no well shaped peaks are detected, "
             "even though the envelope signal is above the threshold. Therefore the "
             "first distace where the signal is above the threshold can be used as an "
