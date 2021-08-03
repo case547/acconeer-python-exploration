@@ -8,6 +8,9 @@ import pyqtgraph as pg
 import acconeer.exptool as et
 from argparse import ArgumentParser
 
+import json
+json_data = '{"downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, "maximize_signal_attenuation": "False", "noise_level_normalization": "True", "profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], "repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", "running_average_factor": 0, "tx_disable": "False", "update_rate": 5}'
+json_as_py = json.loads(json_data)
 
 PEAK_MERGE_LIMIT_M = 0.005
 
@@ -20,7 +23,9 @@ def main():
     
     client = et.SocketClient(args.socket_addr) # Raspberry Pi uses socket client
     
-    sensor_config = get_sensor_config()
+    config = et.configs.EnvelopeServiceConfig() # picking envelope service
+
+    sensor_config = get_sensor_config(config)
     processing_config = get_processing_config()
     sensor_config.sensor = [1]
 
@@ -66,20 +71,25 @@ def main():
     client.disconnect()
 
 
-def get_sensor_config():
+def get_sensor_config(config):
     """Define default sensor config and service to use."""
-    config = et.configs.EnvelopeServiceConfig() # picking envelope service
-    config.downsampling_factor = 1 # must be 1, 2, or 4
-    config.gain = 0.2
-    config.hw_accelerated_average_samples = 10 # number of samples taken for single point in data [1,63]
-    config.maximize_signal_attenuation = False
-    config.noise_level_normalization = True
-    config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_1
-    config.range_interval = [0.1, 0.6] # measurement range (metres)
-    config.repetition_mode = et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN
-    config.running_average_factor = 0  # Use averaging in detector instead of in API
-    config.tx_disable = False # don't disable radio transmitter
-    config.update_rate = 40 # target measurement rate (Hz)
+    for k, v in json_as_py.items():
+        try:
+            setattr(config, k, eval(json_as_py[k]))
+        except:
+            setattr(config, k, v)
+
+    # config.downsampling_factor = 1 # must be 1, 2, or 4
+    # config.gain = 0.2
+    # config.hw_accelerated_average_samples = 10 # number of samples taken for single point in data [1,63]
+    # config.maximize_signal_attenuation = False
+    # config.noise_level_normalization = True
+    # config.profile = et.configs.EnvelopeServiceConfig.Profile.PROFILE_1
+    # config.range_interval = [0.1, 0.6] # measurement range (metres)
+    # config.repetition_mode = et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN
+    # config.running_average_factor = 0  # Use averaging in detector instead of in API
+    # config.tx_disable = False # don't disable radio transmitter
+    # config.update_rate = 40 # target measurement rate (Hz)
 
     return config
 

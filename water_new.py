@@ -1,7 +1,6 @@
 import warnings
 from copy import copy
 from enum import Enum
-from attr import attr
 
 import numpy as np
 
