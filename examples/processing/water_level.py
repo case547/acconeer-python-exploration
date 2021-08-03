@@ -10,7 +10,6 @@ from argparse import ArgumentParser
 
 import json
 json_data = '{"downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, "maximize_signal_attenuation": "False", "noise_level_normalization": "True", "profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], "repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", "running_average_factor": 0, "tx_disable": "False", "update_rate": 5}'
-json_as_py = json.loads(json_data)
 
 PEAK_MERGE_LIMIT_M = 0.005
 
@@ -73,6 +72,7 @@ def main():
 
 def get_sensor_config(config):
     """Define default sensor config and service to use."""
+    json_as_py = json.loads(json_data)
     for k, v in json_as_py.items():
         try:
             setattr(config, k, eval(json_as_py[k]))
