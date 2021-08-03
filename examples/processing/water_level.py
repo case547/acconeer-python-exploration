@@ -9,7 +9,8 @@ import acconeer.exptool as et
 from argparse import ArgumentParser
 
 import json
-json_data = '{"downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, "maximize_signal_attenuation": "False", "noise_level_normalization": "True", "profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], "repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", "running_average_factor": 0, "tx_disable": "False", "update_rate": 5}'
+sensor_json = '{"downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, "maximize_signal_attenuation": false, "noise_level_normalization": true, "profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], "repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", "running_average_factor": 0, "tx_disable": false, "update_rate": 5}'
+processor_json = '{"nbr_average" = 5.0, "threshold_type" = "ThresholdType.FIXED", "fixed_threshold" = 1800}'
 
 PEAK_MERGE_LIMIT_M = 0.005
 
@@ -72,10 +73,10 @@ def main():
 
 def get_sensor_config(config):
     """Define default sensor config and service to use."""
-    json_as_py = json.loads(json_data)
-    for k, v in json_as_py.items():
+    sensor_params = json.loads(sensor_json)
+    for k, v in sensor_params.items():
         try:
-            setattr(config, k, eval(json_as_py[k]))
+            setattr(config, k, eval(v))
         except:
             setattr(config, k, v)
 
@@ -555,9 +556,16 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
     )
 
     # Configure parameters here
-    nbr_average = 5.0
-    threshold_type = ThresholdType.FIXED
-    fixed_threshold = 1800
+    # nbr_average = 5.0
+    # threshold_type = ThresholdType.FIXED
+    # fixed_threshold = 1800
+
+    processor_params = json.loads(processor_json)
+    for k, v in processor_params.items():
+        try:
+            eval(k) = eval(v)
+        except:
+            eval(k) = v
 
     def check_sensor_config(self, sensor_config):
         alerts = {
