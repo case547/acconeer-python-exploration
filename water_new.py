@@ -57,7 +57,7 @@ def main():
 
 
 def get_sensor_config(config):
-    """Define default sensor config and service to use."""
+    """Define default sensor config."""
     for k, v in json_as_py.items():
         if hasattr(config, k):
             try:
