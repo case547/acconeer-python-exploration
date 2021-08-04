@@ -16,12 +16,11 @@ json_data = ('{"ip_a": "10.54.14.197", "downsampling_factor": 1, "gain": 0.2, "h
              '"threshold_type" = "ThresholdType.FIXED", "fixed_threshold" = 1800}'
             )
 json_as_py = json.loads(json_data)
-processor_json = '{"nbr_average" = 5.0, "threshold_type" = "ThresholdType.FIXED", "fixed_threshold" = 1800}'
 
 PEAK_MERGE_LIMIT_M = 0.005
 
 
-def main():    
+def main():
     client = et.SocketClient(json_as_py['ip_a']) # Raspberry Pi uses socket client
     
     config = et.configs.EnvelopeServiceConfig() # picking envelope service
