@@ -8,22 +8,15 @@ import acconeer.exptool as et
 from argparse import ArgumentParser
 
 import json
-json_data = '{"downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, "maximize_signal_attenuation": "False", "noise_level_normalization": "True", "profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], "repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", "running_average_factor": 0, "tx_disable": "False", "update_rate": 5}'
+json_data = '{"ip_a": "10.54.14.197", "downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, "maximize_signal_attenuation": false, "noise_level_normalization": true, "profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], "repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", "running_average_factor": 0, "tx_disable": false, "update_rate": 45}'
 json_as_py = json.loads(json_data)
+processor_json = '{"nbr_average" = 5.0, "threshold_type" = "ThresholdType.FIXED", "fixed_threshold" = 1800}'
 
 PEAK_MERGE_LIMIT_M = 0.005
 
 
-def main():
-    """Needed to run detector from command line."""
-    global json_data
-    global json_as_py
-
-    parser = ArgumentParser()
-    parser.add_argument("socket_addr", help="connect via socket on given address (using json-based protocol)")
-    args = parser.parse_args()
-    
-    client = et.SocketClient(args.socket_addr) # Raspberry Pi uses socket client
+def main():    
+    client = et.SocketClient(json_as_py['ip_a']) # Raspberry Pi uses socket client
     
     config = et.configs.EnvelopeServiceConfig() # picking envelope service
 
@@ -37,54 +30,15 @@ def main():
 
     client.start_session() # call will block until sensor confirms its start
 
-    # Capture keyboard interrupt signal without terminating script, to disconnect gracefully
-    interrupt_handler = et.utils.ExampleInterruptHandler()
-    print("Press Ctrl-C to end session")
-
     processor = Processor(sensor_config, processing_config, session_info)
 
-    # for _ in range(1):
-    #     info, sweep = client.get_next()
-    #     index = processor.sweep_index
-    #     plot_data = processor.process(sweep, info)
-    #     print(f"Sweep {index+1}:\n", info, "\n", plot_data, "\n")
-
-    while not interrupt_handler.got_signal:
-        info, sweep = client.get_next() # get_next() will block until sweep received
-        index = processor.sweep_index
+    for _ in range(5):
+        info, sweep = client.get_next()
         plot_data = processor.process(sweep, info)
 
         if plot_data["found_peaks"]:
             peaks = np.take(processor.r, plot_data["found_peaks"]) * 100.0
-            print(f"Sweep {index}: ", "{:.2f} cm".format(peaks[0]), "\n")
-
-        param = input('Enter parameter to change, "view", or "reconfig": ')
-
-        if param == 'view':
-            attr = input('Enter parameter to view: ')
-            print(getattr(config, attr))
-        elif param == 'reconfig':
-            print("Reconfiguring...")
-            client.disconnect()
-
-            sensor_config = get_sensor_config(config)
-            print('Reconfigured!')
-
-            session_info = client.setup_session(sensor_config) # also calls connect()
-            print("Session info:\n", session_info, "\n")
-
-            client.start_session()
-            processor = Processor(sensor_config, processing_config, session_info)
-
-            continue
-
-        elif hasattr(config, param):
-            new_val = input(f'Enter new value for {param}: ')
-            json_as_py[param] = eval(new_val)
-            json_data = json.dumps(json_as_py)
-            print(f'Reconfigure to apply: {param}, {getattr(config, param)} -> {eval(new_val)}')
-        else:
-            print('Invalid input.')
+            print(info, "\n", "{:.2f} cm".format(peaks[0]), "\n")
 
     print("Disconnecting...")
     client.disconnect()
@@ -93,22 +47,18 @@ def main():
 def get_sensor_config(config):
     """Define default sensor config and service to use."""
     for k, v in json_as_py.items():
-        try:
-            setattr(config, k, eval(json_as_py[k]))
-        except:
-            setattr(config, k, v)
+        if hasattr(config, k):
+            try:
+                setattr(config, k, eval(v))
+            except:
+                setattr(config, k, v)
 
-    # config.downsampling_factor = 1 # must be 1, 2, or 4
-    # config.gain = 0.2
-    # config.hw_accelerated_average_samples = 10 # number of samples taken for single point in data [1,63]
-    # config.maximize_signal_attenuation = False
-    # config.noise_level_normalization = True
-    # config.profile = eval(py_vals['profile'])
-    # config.range_interval = [0.1, 0.6] # measurement range (metres)
-    # config.repetition_mode = et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN
-    # config.running_average_factor = 0  # Use averaging in detector instead of in API
-    # config.tx_disable = False # don't disable radio transmitter
-    # config.update_rate = 5 # target measurement rate (Hz)
+    # downsampling_factor - must be 1, 2, or 4
+    # hw_accelerated_average_samples - number of samples taken for single point in data, [1,63]
+    # range_interval - measurement range (metres)
+    # running_average_factor - keep as 0; use averaging in detector instead of in API
+    # tx_disable - enable/disable radio transmitter
+    # update_rate - target measurement rate (Hz)
 
     return config
 
@@ -426,7 +376,7 @@ class Processor:
 
 
 class ProcessingConfiguration(et.configbase.ProcessingConfig):
-    """Define configuration options for detector.cd """
+    """Define configuration options for detector."""
     class ThresholdType(Enum):
         FIXED = "Fixed"
         RECORDED = "Recorded"
@@ -574,8 +524,13 @@ class ProcessingConfiguration(et.configbase.ProcessingConfig):
     nbr_average = 5.0
     threshold_type = ThresholdType.FIXED
     fixed_threshold = 1800
-    peak_sorting_type = PeakSorting.STRONGEST
 
+    # processor_params = json.loads(processor_json)
+    # for k, v in processor_params.items():
+    #     try:
+    #         eval(k) = eval(v)
+    #     except:
+    #         eval(k) = v
 
     def check_sensor_config(self, sensor_config):
         alerts = {
