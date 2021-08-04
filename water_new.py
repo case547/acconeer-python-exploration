@@ -8,7 +8,13 @@ import acconeer.exptool as et
 from argparse import ArgumentParser
 
 import json
-json_data = '{"ip_a": "10.54.14.197", "downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, "maximize_signal_attenuation": false, "noise_level_normalization": true, "profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], "repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", "running_average_factor": 0, "tx_disable": false, "update_rate": 45}'
+json_data = ('{"ip_a": "10.54.14.197", "downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, '
+             '"maximize_signal_attenuation": false, "noise_level_normalization": true, '
+             '"profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], '
+             '"repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", '
+             '"running_average_factor": 0, "tx_disable": false, "update_rate": 45, "nbr_average" = 5.0, '
+             '"threshold_type" = "ThresholdType.FIXED", "fixed_threshold" = 1800}'
+            )
 json_as_py = json.loads(json_data)
 processor_json = '{"nbr_average" = 5.0, "threshold_type" = "ThresholdType.FIXED", "fixed_threshold" = 1800}'
 
@@ -21,8 +27,15 @@ def main():
     config = et.configs.EnvelopeServiceConfig() # picking envelope service
 
     sensor_config = get_sensor_config(config)
-    processing_config = get_processing_config()
     sensor_config.sensor = [1]
+
+    processing_config = get_processing_config()
+    for k, v in json_as_py.items():
+        if hasattr(processing_config, k):
+            try:
+                setattr(processing_config, k, eval(v))
+            except:
+                setattr(processing_config, k, v)
 
     # Set up session with created config
     session_info = client.setup_session(sensor_config) # also calls connect()
