@@ -8,13 +8,7 @@ import acconeer.exptool as et
 from argparse import ArgumentParser
 
 import json
-json_data = ('{"ip_a": "10.54.14.197", "downsampling_factor": 1, "gain": 0.2, "hw_accelerated_average_samples": 10, '
-             '"maximize_signal_attenuation": false, "noise_level_normalization": true, '
-             '"profile": "et.configs.EnvelopeServiceConfig.Profile.PROFILE_1", "range_interval": [0.1, 0.8], '
-             '"repetition_mode": "et.configs.EnvelopeServiceConfig.RepetitionMode.SENSOR_DRIVEN", '
-             '"running_average_factor": 0, "tx_disable": false, "update_rate": 45, "nbr_average" = 5.0, '
-             '"threshold_type" = "ThresholdType.FIXED", "fixed_threshold" = 1800}'
-            )
+json_data = '{"ip_a":"10.54.14.197","running_average_factor":0,"gain":0.2,"profile":"et.configs.EnvelopeServiceConfig.Profile.PROFILE_1","range_interval":[0.1,0.8],"update_rate":10,"fixed_threshold":1800}'
 json_as_py = json.loads(json_data)
 
 PEAK_MERGE_LIMIT_M = 0.005
