@@ -38,13 +38,16 @@ def main():
 
     processor = Processor(sensor_config, processing_config, session_info)
 
-    for _ in range(5):
+    for _ in range(25):
         info, sweep = client.get_next()
         plot_data = processor.process(sweep, info)
 
+        print("Found peaks: ", plot_data["found_peaks"])
+
         if plot_data["found_peaks"]:
             peaks = np.take(processor.r, plot_data["found_peaks"]) * 100.0
-            print(info, "\n", "{:.2f} cm".format(peaks[0]), "\n")
+            print("Peaks :", peaks)
+            print("{:.2f} cm".format(peaks[0]), "\n")
 
     print("Disconnecting...")
     client.disconnect()
