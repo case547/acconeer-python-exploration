@@ -46,7 +46,7 @@ def main():
 
         if plot_data["found_peaks"]:
             peaks = np.take(processor.r, plot_data["found_peaks"]) * 100.0
-            print("Peaks :", peaks)
+            print("Peaks: ", peaks)
             print("{:.2f} cm".format(peaks[0]), "\n")
 
     print("Disconnecting...")
