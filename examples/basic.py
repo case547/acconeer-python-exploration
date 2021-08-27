@@ -69,7 +69,7 @@ def main():
     # is recieved. Some information/metadata is returned together with
     # the data.
 
-    for i in range(3):
+    for i in range(5):
         data_info, data = client.get_next()
         print("Sweep {}:\n".format(i + 1), data_info, "\n", data, "\n")
 
