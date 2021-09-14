@@ -37,6 +37,7 @@ def main():
         session_info = client.setup_session(sensor_config) # also calls connect()
     except LinkError:
         os.system('/home/pi/acconeer_rpi_xc112/utils/acc_streaming_server')
+        os.system('python3 /home/pi/acconeer-python-exploration/water_new.py')
         session_info = client.setup_session(sensor_config)
     
     print("Session info:\n", session_info, "\n")
