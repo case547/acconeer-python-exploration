@@ -17,11 +17,7 @@ PEAK_MERGE_LIMIT_M = 0.005
 
 
 def main():
-    try:
-        client = et.SocketClient('127.0.0.1') # Raspberry Pi uses socket client
-    except LinkError:
-        os.system('/home/pi/acconeer_rpi_xc112/utils/acc_streaming_server')
-        client = et.SocketClient('127.0.0.1')
+    client = et.SocketClient('127.0.0.1') # Raspberry Pi uses socket client
     
     config = et.configs.EnvelopeServiceConfig() # picking envelope service
 
@@ -37,7 +33,12 @@ def main():
                 setattr(processing_config, k, v)
 
     # Set up session with created config
-    session_info = client.setup_session(sensor_config) # also calls connect()
+    try:
+        session_info = client.setup_session(sensor_config) # also calls connect()
+    except LinkError:
+        os.system('/home/pi/acconeer_rpi_xc112/utils/acc_streaming_server')
+        session_info = client.setup_session(sensor_config)
+    
     print("Session info:\n", session_info, "\n")
 
     client.start_session() # call will block until sensor confirms its start
