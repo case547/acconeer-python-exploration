@@ -1,10 +1,12 @@
 import warnings
 from copy import copy
 from enum import Enum
+import os
 
 import numpy as np
 
 import acconeer.exptool as et
+from acconeer.exptool.clients.links import LinkError
 from argparse import ArgumentParser
 
 import json
@@ -15,7 +17,11 @@ PEAK_MERGE_LIMIT_M = 0.005
 
 
 def main():
-    client = et.SocketClient(json_as_py['ip_a']) # Raspberry Pi uses socket client
+    try:
+        client = et.SocketClient('127.0.0.1') # Raspberry Pi uses socket client
+    except LinkError:
+        os.system('/home/pi/acconeer_rpi_xc112/utils/acc_streaming_server')
+        client = et.SocketClient('127.0.0.1')
     
     config = et.configs.EnvelopeServiceConfig() # picking envelope service
 
